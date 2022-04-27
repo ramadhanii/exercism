@@ -6,10 +6,23 @@ defmodule WordCount do
   """
   @spec count(String.t()) :: map
   def count(sentence) do
-    sentence = Regex.replace(~r/[!#$%&()*+,.:;<=>?@\^_`{|}~]/, sentence, " ")
-    str_list = Regex.replace(~r/\s+/, String.trim(sentence), " ") |> String.split(~r/([\s|\n|\t|_])/)
-    |> Enum.map(fn x -> String.trim(String.downcase(x), "'") end)
+    str_list = replaceSpecialChar(sentence)
+                |> cleanMultipleSpace()
+                |> String.split(~r/([\s|\n|\t|_])/)
+                |> Enum.map(fn x -> String.trim(String.downcase(x), "'") end)
 
     Enum.reduce(str_list, %{}, fn x, new_struct -> Map.put(new_struct, x, Enum.count(str_list, fn xx -> xx == x end)) end)
   end
+
+  @doc """
+  Replace special characters with space
+  """
+  @spec replaceSpecialChar(String.t()) :: String.t()
+  def replaceSpecialChar(sentence), do: Regex.replace(~r/[!#$%&()*+,.:;<=>?@\^_`{|}~]/, sentence, " ")
+
+  @doc """
+  Clean double space
+  """
+  @spec cleanMultipleSpace(String.t()) :: String.t()
+  def cleanMultipleSpace(sentence), do: Regex.replace(~r/\s+/, String.trim(sentence), " ")
 end

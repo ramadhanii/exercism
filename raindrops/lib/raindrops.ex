@@ -1,4 +1,9 @@
 defmodule Raindrops do
+  @sound %{
+    3 => "Pling",
+    5 => "Plang",
+    7 => "Plong"
+  }
   @doc """
   Returns a string based on raindrop factors.
 
@@ -10,12 +15,13 @@ defmodule Raindrops do
   """
   @spec convert(pos_integer) :: String.t()
   def convert(number) do
-    sound = Enum.reduce([3, 5, 7], "", fn x, acc -> acc <> con(number, x) end)
-    if sound == "", do: "#{number}", else: sound
+    Enum.reduce([3, 5, 7], "", fn x, acc -> acc <> con(number, x) end)
+    |> result(number)
   end
 
-  defp con(number, prime_factor) when prime_factor === 3 and rem(number, 3) === 0, do: "Pling"
-  defp con(number, prime_factor) when prime_factor === 5 and rem(number, 5) === 0, do: "Plang"
-  defp con(number, prime_factor) when prime_factor === 7 and rem(number, 7) === 0, do: "Plong"
+  defp con(number, prime_factor) when rem(number, prime_factor) === 0, do: Map.get(@sound, prime_factor)
   defp con(_, _), do: ""
+
+  defp result(sound, number) when sound == "", do: "#{number}"
+  defp result(sound, _), do: sound
 end

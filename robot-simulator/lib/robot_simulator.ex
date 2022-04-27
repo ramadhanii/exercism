@@ -1,3 +1,69 @@
+defmodule North do
+  defstruct name: :north, x: 0, y: 0
+end
+
+defmodule South do
+  defstruct name: :south, x: 0, y: 0
+end
+
+defmodule East do
+  defstruct name: :east, x: 0, y: 0
+end
+
+defmodule West do
+  defstruct name: :west, x: 0, y: 0
+end
+
+defprotocol Robot do
+  def move(robot, instruction)
+  def get_direction(robot)
+  def get_position(robot)
+end
+
+
+defimpl Robot, for: North do
+  def move(robot, "A"), do: %{robot | y: robot.y + 1}
+  def move(robot, "L"), do: %West{x: robot.x, y: robot.y}
+  def move(robot, "R"), do: %East{x: robot.x, y: robot.y}
+  def move(_robot, _), do: {:error, "invalid instruction"}
+
+  def get_direction(robot), do: robot.name
+  def get_position(robot), do: {robot.x, robot.y}
+end
+
+
+defimpl Robot, for: South do
+  def move(robot, "A"), do: %{robot | y: robot.y - 1}
+  def move(robot, "L"), do: %East{x: robot.x, y: robot.y}
+  def move(robot, "R"), do: %West{x: robot.x, y: robot.y}
+  def move(_robot, _), do: {:error, "invalid instruction"}
+
+  def get_direction(robot), do: robot.name
+  def get_position(robot), do: {robot.x, robot.y}
+end
+
+
+defimpl Robot, for: East do
+  def move(robot, "A"), do: %{robot | x: robot.x + 1}
+  def move(robot, "L"), do: %North{x: robot.x, y: robot.y}
+  def move(robot, "R"), do: %South{x: robot.x, y: robot.y}
+  def move(_robot, _), do: {:error, "invalid instruction"}
+
+  def get_direction(robot), do: robot.name
+  def get_position(robot), do: {robot.x, robot.y}
+end
+
+
+defimpl Robot, for: West do
+  def move(robot, "A"), do: %{robot | x: robot.x - 1}
+  def move(robot, "L"), do: %South{x: robot.x, y: robot.y}
+  def move(robot, "R"), do: %North{x: robot.x, y: robot.y}
+  def move(_robot, _), do: {:error, "invalid instruction"}
+
+  def get_direction(robot), do: robot.name
+  def get_position(robot), do: {robot.x, robot.y}
+end
+
 defmodule RobotSimulator do
   @direction [:north, :east, :south, :west]
   @doc """
@@ -15,7 +81,14 @@ defmodule RobotSimulator do
     end
   end
 
-  defp do_create(direction, {a, b} = position) when is_number(a) and is_number(b), do: {direction, position}
+  defp do_create(direction, {x, y}) when is_number(x) and is_number(y) do
+    case direction do
+      :north -> %North{x: x, y: y}
+      :south -> %South{x: x, y: y}
+      :west -> %West{x: x, y: y}
+      _ -> %East{x: x, y: y}
+    end
+  end
   defp do_create(_, {_, _}), do: {:error, "invalid position"}
   defp do_create(_, _), do: {:error, "invalid position"}
 
@@ -30,27 +103,10 @@ defmodule RobotSimulator do
     |> do_move(String.graphemes(instructions))
   end
 
-  defp do_move(robot, ["A" | instructions]), do: do_move(go(robot), instructions)
-  defp do_move(robot, ["R" = instruction | instructions]), do: do_move(get_direction(robot, instruction), instructions)
-  defp do_move(robot, ["L" = instruction | instructions]), do: do_move(get_direction(robot, instruction), instructions)
+  defp do_move({:error, _} = robot, _), do: robot
+  defp do_move(robot, [head | instructions]), do: do_move(Robot.move(robot, head), instructions)
   defp do_move(robot, []), do: robot
   defp do_move(_, _), do: {:error, "invalid instruction"}
-
-  defp go(robot)
-  defp go({:north = dir, {x, y}}), do: {dir, {x, y+1}}
-  defp go({:south = dir, {x, y}}), do: {dir, {x, y-1}}
-  defp go({:west = dir, {x, y}}), do: {dir, {x-1, y}}
-  defp go({:east = dir, {x, y}}), do: {dir, {x+1, y}}
-
-  defp get_direction(curr_dir, turn)
-  defp get_direction({:north, position}, "L"), do: {:west, position}
-  defp get_direction({:north, position}, "R"), do: {:east, position}
-  defp get_direction({:south, position}, "L"), do: {:east, position}
-  defp get_direction({:south, position}, "R"), do: {:west, position}
-  defp get_direction({:east, position}, "L"), do: {:north, position}
-  defp get_direction({:east, position}, "R"), do: {:south, position}
-  defp get_direction({:west, position}, "L"), do: {:south, position}
-  defp get_direction({:west, position}, "R"), do: {:north, position}
 
   @doc """
   Return the robot's direction.
@@ -58,20 +114,14 @@ defmodule RobotSimulator do
   Valid directions are: `:north`, `:east`, `:south`, `:west`
   """
   @spec direction(robot :: any) :: atom
-  def direction({direction, _}), do: direction
   def direction(nil), do: nil
+  def direction(robot), do: Robot.get_direction(robot)
 
   @doc """
   Return the robot's position.
   """
   @spec position(robot :: any) :: {integer, integer}
-  def position({direction, position}) do
-    if Enum.find(@direction, fn x -> x == direction end) == nil do
-      {:error, "invalid direction"}
-    else
-      position
-    end
-  end
+  def position(robot), do: Robot.get_position(robot)
 
   defp allowed_dir?(direction), do: Enum.find(@direction, fn x -> x == direction end) != nil
 end

@@ -28,7 +28,7 @@ defmodule BankAccount do
   """
   @spec balance(account) :: integer
   def balance(account) do
-    if is_pid(account) and Process.alive?(account) do
+    if processable?(account) do
       Agent.get(account, &(&1))
     else
       {:error, :account_closed}
@@ -40,10 +40,12 @@ defmodule BankAccount do
   """
   @spec update(account, integer) :: any
   def update(account, amount) do
-    if is_pid(account) and Process.alive?(account) do
+    if processable?(account) do
       Agent.update(account, &(&1 + amount))
     else
       {:error, :account_closed}
     end
   end
+
+  defp processable?(account), do: is_pid(account) and Process.alive?(account)
 end

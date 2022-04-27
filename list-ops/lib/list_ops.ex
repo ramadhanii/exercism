@@ -11,7 +11,7 @@ defmodule ListOps do
   def count(_, counter), do: counter
 
   @spec reverse(list) :: list
-  def reverse(list), do: foldr(list, [], fn acc, head -> append([head], acc) end)
+  def reverse(list), do: foldl(list, [], fn item, acc -> append([item], acc) end)
 
   @spec map(list, (any -> any)) :: list
   def map(list, f)
@@ -36,15 +36,16 @@ defmodule ListOps do
   def foldl(_, acc, _), do: acc
 
   @spec foldr(list, acc, (any, acc -> acc)) :: acc
-  def foldr(l, acc, f)
-  def foldr([head | tails], acc, f) when is_function(f), do: foldr(tails, f.(acc, head), f)
-  def foldr(_, acc, _), do: acc
+  def foldr(l, acc, f), do: foldrr(reverse(l), acc, f)
+  defp foldrr([head | tails], acc, f) when is_function(f), do: foldrr(tails, f.(head, acc), f)
+  defp foldrr(_, acc, _), do: acc
 
   @spec append(list, list) :: list
   def append(a, b)
   def append([a|taila], b), do: [a | append(taila, b)]
   def append(_, b), do: b
 
+
   @spec concat([[any]]) :: [any]
-  def concat(ll), do: foldr(ll, [], &(append(&1, &2)) )
+  def concat(ll), do: foldl(ll, [], &(append(&2, &1)) )
 end

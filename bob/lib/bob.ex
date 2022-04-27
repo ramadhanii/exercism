@@ -1,9 +1,7 @@
 defmodule Bob do
 
-  # defp not_contains_alphanumeric?(input), do: Regex.match?(~r/^((?![a-zA-Z]).)*$/, String.trim(input))
   defp only_numbers?(input), do: Regex.match?(~r/^[0-9, :\)\?]*$/, input)
   defp is_upcase?(input), do: input == String.upcase(input)
-  # defp is_upcase?(input), do: Regex.match?(~r/[a-zA-Z].*/, String.trim(input)) and input == String.upcase(input)
   defp is_question?(input), do: String.ends_with?(String.trim(input), "?")
 
   @spec hey(String.t()) :: String.t()
